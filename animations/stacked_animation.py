@@ -1,8 +1,9 @@
 import sys
 from PyQt4 import QtCore, QtGui
 
-COLOR_LIST = ['red','blue','green', 'black', 'cyan', 'magenta']
-ANIMATION_SPEED = 200
+COLOR_LIST = ['red', 'blue', 'green', 'black', 'cyan', 'magenta']
+ANIMATION_SPEED = 400
+
 
 def make_callback(func, *param):
     '''
@@ -10,29 +11,30 @@ def make_callback(func, *param):
     '''
     return lambda: func(*param)
 
+
 class App(QtGui.QMainWindow):
-    
+
     def __init__(self, app, parent=None):
         QtGui.QMainWindow.__init__(self, parent)
 
         # reference to qapp instance
         self.app = app
-        
+
         self.animating = False
         self.stack_animation = None
-        
-        self.resize(QtCore.QSize(500,200))
-        
+
+        self.resize(QtCore.QSize(500, 200))
+
         # widgets
         self.mainwidget = QtGui.QWidget()
         self.setCentralWidget(self.mainwidget)
-        
+
         self.listwidget = QtGui.QListWidget()
         self.listwidget.addItems(COLOR_LIST)
         self.listwidget.itemSelectionChanged.connect(self.change_color)
-        
+
         self.stackedwidget = QtGui.QStackedWidget()
-        
+
         for color in COLOR_LIST:
             widget = QtGui.QWidget()
             widget.setStyleSheet('QWidget{'
@@ -44,15 +46,15 @@ class App(QtGui.QMainWindow):
         # layouts
         self.hlayout = QtGui.QHBoxLayout(self.mainwidget)
         self.mainwidget.setLayout(self.hlayout)
-        
+
         self.hlayout.addWidget(self.listwidget)
         self.hlayout.addWidget(self.stackedwidget)
-        
+
     def change_color(self):
-        
+
         new_color = str(self.listwidget.currentItem().text())
         old_color = str(self.stackedwidget.currentWidget().objectName())
-        
+
         old_index = self.stackedwidget.currentIndex()
         new_index = 0
         for i in range(self.stackedwidget.count()):
@@ -60,12 +62,12 @@ class App(QtGui.QMainWindow):
                 if new_color == str(widget.objectName()):
                     new_index = i
                     break
-        
+
         print('Changing from:', old_color, old_index,
               'To:', new_color, new_index)
-              
+
         self.animate(old_index, new_index)
-              
+
     def animate(self, from_, to, direction='vertical'):
         """ animate changing of qstackedwidget """
 
@@ -102,12 +104,6 @@ class App(QtGui.QMainWindow):
         # set the geometry of the next widget
         to_widget.setGeometry(0 + offsetx, 0 + offsety, width, height)
         to_widget.show()
-        from_widget.show()
-        from_widget.setHidden(False)
-#        to_widget.lower()
-#        to_widget.raise_()
-
-        print(self.stackedwidget.currentIndex())
 
         # animate
         # from widget
@@ -156,12 +152,11 @@ class App(QtGui.QMainWindow):
             from_widget.hide()
             from_widget.move(0, 0)
             self.animating = False
-        
+
     def animate_state_changed(self, from_, to):
         """ check to see if the animation has been stopped """
-        
+
         self.animate_stacked_widget_finished(from_, to)
-            
 
 
 if __name__ == '__main__':

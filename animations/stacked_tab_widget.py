@@ -1,7 +1,7 @@
 import sys
 from PyQt4 import QtCore, QtGui
 
-COLOR_LIST = ['red','blue','green', 'black', 'cyan', 'magenta']
+COLOR_LIST = ['red', 'blue', 'green', 'black', 'cyan', 'magenta']
 ANIMATION_SPEED = 500
 
 
@@ -55,6 +55,7 @@ class AnimatedTabWidget(QtGui.QWidget):
         self.hlayout.addWidget(self.line, 1, 0)
 
         # build frames
+        self.btndict = {}
         for i, tab in enumerate(tabs):
             widget = QtGui.QWidget()
             widget.setStyleSheet('QWidget{'
@@ -64,7 +65,6 @@ class AnimatedTabWidget(QtGui.QWidget):
             self.stackedwidget.addWidget(widget)
 
             btn = QtGui.QPushButton(tab, self.btnframe)
-            btn.setCheckable(True)
             btn.setFlat(True)
             btn.pressed.connect(make_callback(self.change_color, tab))
             btn.setStyleSheet('QPushButton:hover {'
@@ -83,11 +83,9 @@ class AnimatedTabWidget(QtGui.QWidget):
                               '  background-color: transparent;'
                               '}')
             self.hlayout.addWidget(btn, 0, i)
+            self.btndict[tab] = btn
 
-
-
-
-    def change_color(self, new_color):
+    def change_color(self, new_btn):
 
         old_color = str(self.stackedwidget.currentWidget().objectName())
 
@@ -95,16 +93,16 @@ class AnimatedTabWidget(QtGui.QWidget):
         new_index = 0
         for i in range(self.stackedwidget.count()):
                 widget = self.stackedwidget.widget(i)
-                if new_color == str(widget.objectName()):
+                if new_btn == str(widget.objectName()):
                     new_index = i
                     break
 
         print('Changing from:', old_color, old_index,
-              'To:', new_color, new_index)
+              'To:', new_btn, new_index)
 
-        self.animate(old_index, new_index)
+        self.animate(old_index, new_index, new_btn)
 
-    def animate(self, from_, to, direction='horizontal'):
+    def animate(self, from_, to, new_btn, direction='horizontal'):
         """ animate changing of qstackedwidget """
 
         # check to see if already animating
@@ -140,12 +138,6 @@ class AnimatedTabWidget(QtGui.QWidget):
         # set the geometry of the next widget
         to_widget.setGeometry(0 + offsetx, 0 + offsety, width, height)
         to_widget.show()
-        from_widget.show()
-        from_widget.setHidden(False)
-#        to_widget.lower()
-#        to_widget.raise_()
-
-        print(self.stackedwidget.currentIndex())
 
         # animate
         # from widget
@@ -170,10 +162,22 @@ class AnimatedTabWidget(QtGui.QWidget):
             QtCore.QPoint(0,
                           0))
 
+        # animate bar
+        animline = QtCore.QPropertyAnimation(self.line, "pos")
+        animline.setDuration(ANIMATION_SPEED)
+        animline.setEasingCurve(QtCore.QEasingCurve.InOutQuint)
+        animline.setStartValue(
+            QtCore.QPoint(self.line.geometry().x(),
+                          self.line.geometry().y()))
+        animline.setEndValue(
+            QtCore.QPoint(self.btndict[new_btn].geometry().x(),
+                          self.line.geometry().y()))
+
         # animation group
         self.stack_animation = QtCore.QParallelAnimationGroup()
         self.stack_animation.addAnimation(animnow)
         self.stack_animation.addAnimation(animnext)
+        self.stack_animation.addAnimation(animline)
         self.stack_animation.finished.connect(
             make_callback(self.animate_stacked_widget_finished,
                           from_, to)
@@ -195,12 +199,13 @@ class AnimatedTabWidget(QtGui.QWidget):
             from_widget.move(0, 0)
             self.animating = False
 
+            self.hlayout.addItem(
+                self.hlayout.takeAt(self.hlayout.indexOf(self.line)), 1, to)
+
     def animate_state_changed(self, from_, to):
         """ check to see if the animation has been stopped """
 
         self.animate_stacked_widget_finished(from_, to)
-
-
 
 if __name__ == '__main__':
     qapp = QtGui.QApplication(sys.argv)
