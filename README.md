@@ -5,4 +5,4 @@ A collection of custom widgets and examples
 
 ### stacked_tab_widget.py
 
-[stacked_tab_widget.py](https://raw.githubusercontent.com/onlyjus/qt_examples/master/stacked_tab_widget.png)
+![stacked_tab_widget.py](https://raw.githubusercontent.com/onlyjus/qt_examples/master/stacked_tab_widget.png)
